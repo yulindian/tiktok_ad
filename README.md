@@ -35,7 +35,28 @@ python -m http.server 5178
 
 ## 当前限制
 
-- 数据保存在当前浏览器 `localStorage`，不是云端共享。
-- 原始文件也以本地浏览器数据保存，适合 MVP 验证，不适合长期大规模生产数据。
-- 下一阶段建议接入 Supabase PostgreSQL、Storage 和 Edge Function，实现多人共享固定网址。
+- 未配置 Supabase 时，数据保存在当前浏览器 `localStorage`。
+- 配置 Supabase 后，数据会同步到云端 `app_state` 表，实现多人共享同一份数据。
+- 当前云端版为了快速跑通，先用一张 JSON 状态表保存全部数据；后续数据量变大后，建议拆成广告、上传批次、每日明细、操作日志等多张表。
+
+## Supabase 云端共享配置
+
+1. 在 Supabase 创建一个新项目。
+2. 打开项目的 SQL Editor。
+3. 复制并执行 `supabase-schema.sql` 里的全部 SQL。
+4. 打开项目的 Settings > API，复制：
+   - Project URL
+   - anon public key
+5. 修改 `supabase-config.js`：
+
+```js
+window.SUPABASE_CONFIG = {
+  url: "https://你的项目.supabase.co",
+  anonKey: "你的 anon public key",
+};
+```
+
+6. 提交并推送到 GitHub，GitHub Pages 更新后即可多人共享数据。
+
+注意：当前需求是公开访问、无登录，所以 Supabase 策略也按公开读写配置。任何拿到网页地址的人都可以查看、上传、删除和归档数据。
 

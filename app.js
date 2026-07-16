@@ -58,6 +58,12 @@
   ]);
 
   const state = loadState();
+  const cloud = {
+    enabled: false,
+    client: null,
+    syncTimer: null,
+    lastError: "",
+  };
   let currentView = "home";
   let currentProductId = null;
   let editingProductId = null;
@@ -77,8 +83,10 @@
 
   boot();
 
-  function boot() {
+  async function boot() {
     bindEvents();
+    setStorageMode("本地 MVP", "正在检查云端配置...");
+    await initCloud();
     render();
   }
 
@@ -113,6 +121,76 @@
 
   function persist() {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    queueCloudSave();
+  }
+
+  async function initCloud() {
+    const config = window.SUPABASE_CONFIG || {};
+    const url = (config.url || "").trim();
+    const anonKey = (config.anonKey || "").trim();
+    if (!url || !anonKey || !window.supabase?.createClient) {
+      setStorageMode("本地 MVP", "未配置 Supabase，数据保存在当前浏览器。");
+      return;
+    }
+    try {
+      cloud.client = window.supabase.createClient(url, anonKey);
+      const { data, error } = await cloud.client.from("app_state").select("state").eq("id", "main").maybeSingle();
+      if (error) throw error;
+      cloud.enabled = true;
+      if (data?.state) {
+        replaceState(data.state);
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      } else {
+        await saveCloudState();
+      }
+      setStorageMode("云端共享", "已连接 Supabase，所有访问者共享同一份数据。");
+    } catch (error) {
+      cloud.enabled = false;
+      cloud.lastError = error.message || "Supabase 连接失败";
+      setStorageMode("本地 MVP", `云端连接失败：${cloud.lastError}`);
+    }
+  }
+
+  function replaceState(nextState) {
+    state.products = Array.isArray(nextState.products) ? nextState.products : [];
+    state.uploads = Array.isArray(nextState.uploads) ? nextState.uploads : [];
+    state.records = Array.isArray(nextState.records) ? nextState.records : [];
+    state.auditLogs = Array.isArray(nextState.auditLogs) ? nextState.auditLogs : [];
+  }
+
+  function setStorageMode(title, text) {
+    const titleEl = $("storageModeTitle");
+    const textEl = $("storageModeText");
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = text;
+  }
+
+  function queueCloudSave() {
+    if (!cloud.enabled) return;
+    clearTimeout(cloud.syncTimer);
+    cloud.syncTimer = setTimeout(() => {
+      saveCloudState().catch((error) => {
+        cloud.lastError = error.message || "云端保存失败";
+        setStorageMode("云端异常", cloud.lastError);
+      });
+    }, 250);
+  }
+
+  async function saveCloudState() {
+    if (!cloud.enabled || !cloud.client) return;
+    const payload = {
+      id: "main",
+      state: {
+        products: state.products,
+        uploads: state.uploads,
+        records: state.records,
+        auditLogs: state.auditLogs,
+      },
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await cloud.client.from("app_state").upsert(payload, { onConflict: "id" });
+    if (error) throw error;
+    setStorageMode("云端共享", "已连接 Supabase，所有访问者共享同一份数据。");
   }
 
   function uid(prefix) {

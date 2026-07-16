@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div id="app">
@@ -26,8 +27,8 @@
           <button class="nav-item" data-view="logs">操作记录</button>
         </nav>
         <div class="sidebar-note">
-          <strong>本地 MVP</strong>
-          <span>数据保存在当前浏览器，适合先验证流程和口径。</span>
+          <strong id="storageModeTitle">本地 MVP</strong>
+          <span id="storageModeText">数据保存在当前浏览器，适合先验证流程和口径。</span>
         </div>
       </aside>
 
@@ -110,6 +111,7 @@
       </div>
     </div>
 
+    <script src="./supabase-config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
