@@ -1,0 +1,116 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TikTok 广告投放记录</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">AD</span>
+          <div>
+            <strong>广告日报</strong>
+            <small>TikTok 投放看板</small>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-item active" data-view="home">广告首页</button>
+          <button class="nav-item" data-view="reports">日报记录</button>
+          <button class="nav-item" data-view="archived">已归档广告</button>
+          <button class="nav-item" data-view="logs">操作记录</button>
+        </nav>
+        <div class="sidebar-note">
+          <strong>本地 MVP</strong>
+          <span>数据保存在当前浏览器，适合先验证流程和口径。</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">MVP V1.0</p>
+            <h1 id="pageTitle">广告首页</h1>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" id="resetDemoBtn">清空本地数据</button>
+            <button class="btn secondary" id="openUploadBtn">上传日报</button>
+            <button class="btn primary" id="openProductBtn">新增广告</button>
+          </div>
+        </header>
+
+        <section id="homeView" class="view active"></section>
+        <section id="detailView" class="view"></section>
+        <section id="reportsView" class="view"></section>
+        <section id="archivedView" class="view"></section>
+        <section id="logsView" class="view"></section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal" id="productModal" aria-hidden="true">
+      <div class="modal-panel small">
+        <div class="modal-head">
+          <h2 id="productModalTitle">新增广告</h2>
+          <button class="icon-btn" data-close="productModal">×</button>
+        </div>
+        <label class="field">
+          <span>广告名称</span>
+          <input id="productNameInput" type="text" placeholder="例如：夏季连衣裙" />
+        </label>
+        <div class="modal-actions">
+          <button class="btn ghost" data-close="productModal">取消</button>
+          <button class="btn primary" id="saveProductBtn">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="uploadModal" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-head">
+          <h2>上传广告日报</h2>
+          <button class="icon-btn" data-close="uploadModal">×</button>
+        </div>
+        <div class="form-grid">
+          <label class="field">
+            <span>广告</span>
+            <select id="uploadProductSelect"></select>
+          </label>
+          <label class="field">
+            <span>日报日期</span>
+            <input id="uploadDateInput" type="date" />
+          </label>
+        </div>
+        <label class="dropzone" id="dropzone">
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+          <strong>选择 Excel / CSV 文件</strong>
+          <span id="fileHint">支持平台导出的标准素材明细报表</span>
+        </label>
+        <div class="modal-actions">
+          <button class="btn ghost" data-close="uploadModal">取消</button>
+          <button class="btn primary" id="uploadBtn">开始上传</button>
+        </div>
+        <div class="error-box" id="uploadError"></div>
+      </div>
+    </div>
+
+    <div class="modal" id="materialModal" aria-hidden="true">
+      <div class="modal-panel wide">
+        <div class="modal-head">
+          <h2 id="materialTitle">素材详情</h2>
+          <button class="icon-btn" data-close="materialModal">×</button>
+        </div>
+        <div id="materialBody"></div>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
+
