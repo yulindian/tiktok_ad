@@ -1,5 +1,8 @@
 ﻿(function () {
   const STORE_KEY = "tiktok-ad-mvp-state-v1";
+  const AUTH_KEY = "tiktok-ad-dashboard-auth";
+  const LOGIN_ACCOUNT = "123456";
+  const LOGIN_PASSWORD = "123456";
   const PAGE_SIZE = 20;
 
   const fieldAliases = {
@@ -84,10 +87,43 @@
   boot();
 
   async function boot() {
+    initLoginGate();
     bindEvents();
     setStorageMode("本地 MVP", "正在检查云端配置...");
     await initCloud();
     render();
+  }
+
+  function initLoginGate() {
+    const gate = $("loginGate");
+    const form = $("loginForm");
+    const error = $("loginError");
+    if (!gate || !form) return;
+    document.body.classList.add("locked");
+    if (sessionStorage.getItem(AUTH_KEY) === "ok") {
+      unlockApp();
+      return;
+    }
+    gate.classList.remove("hidden");
+    $("loginAccount")?.focus();
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const account = $("loginAccount").value.trim();
+      const password = $("loginPassword").value;
+      if (account === LOGIN_ACCOUNT && password === LOGIN_PASSWORD) {
+        sessionStorage.setItem(AUTH_KEY, "ok");
+        if (error) error.style.display = "none";
+        unlockApp();
+      } else if (error) {
+        error.style.display = "block";
+      }
+    });
+  }
+
+  function unlockApp() {
+    const gate = $("loginGate");
+    gate?.classList.add("hidden");
+    document.body.classList.remove("locked");
   }
 
   function bindEvents() {
@@ -103,6 +139,16 @@
     $("fileInput").addEventListener("change", handleFileSelect);
     $("uploadBtn").addEventListener("click", uploadReport);
     $("resetDemoBtn").addEventListener("click", resetData);
+    $("logoutBtn").addEventListener("click", logout);
+  }
+
+  function logout() {
+    sessionStorage.removeItem(AUTH_KEY);
+    const gate = $("loginGate");
+    gate?.classList.remove("hidden");
+    document.body.classList.add("locked");
+    $("loginPassword").value = "";
+    $("loginAccount")?.focus();
   }
 
   function loadState() {
