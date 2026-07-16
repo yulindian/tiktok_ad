@@ -11,6 +11,29 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
+    <div class="login-gate" id="loginGate">
+      <form class="login-card" id="loginForm">
+        <div class="brand login-brand">
+          <span class="brand-mark">AD</span>
+          <div>
+            <strong>广告日报</strong>
+            <small>TikTok 投放看板</small>
+          </div>
+        </div>
+        <h1>访问验证</h1>
+        <label class="field">
+          <span>账号</span>
+          <input id="loginAccount" type="text" autocomplete="username" />
+        </label>
+        <label class="field">
+          <span>密码</span>
+          <input id="loginPassword" type="password" autocomplete="current-password" />
+        </label>
+        <button class="btn primary login-submit" type="submit">进入看板</button>
+        <div class="error-box login-error" id="loginError">账号或密码错误</div>
+      </form>
+    </div>
+
     <div id="app">
       <aside class="sidebar">
         <div class="brand">
@@ -40,6 +63,7 @@
           </div>
           <div class="actions">
             <button class="btn ghost" id="resetDemoBtn">清空本地数据</button>
+            <button class="btn ghost" id="logoutBtn">退出登录</button>
             <button class="btn secondary" id="openUploadBtn">上传日报</button>
             <button class="btn primary" id="openProductBtn">新增广告</button>
           </div>
