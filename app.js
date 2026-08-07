@@ -345,10 +345,26 @@
   }
 
   function badgeClass(status) {
-    if (status === "投放中") return "live";
-    if (status === "已排除" || status === "不可用") return "excluded";
+    const group = statusGroup(status);
+    if (group === "exploring") return "exploring";
+    if (group === "explored") return "explored";
+    if (group === "excluded") return "excluded";
+    if (group === "ineligible") return "ineligible";
+    if (group === "unavailable") return "unavailable";
+    if (group === "learning") return "learning";
+    if (group === "live") return "live";
+    return "neutral";
+  }
+
+  function statusGroup(status) {
+    if (status === "探索中") return "exploring";
+    if (status === "已探索") return "explored";
+    if (status === "已排除") return "excluded";
+    if (status === "不符合条件") return "ineligible";
+    if (status === "不可用") return "unavailable";
     if (status === "学习中" || status === "排队中") return "learning";
-    return "";
+    if (status === "投放中") return "live";
+    return "other";
   }
 
   function log(action, targetType, targetId, detail) {
@@ -414,10 +430,11 @@
         </div>
         <div class="stat-grid">
           <div class="stat"><span>素材总数</span><strong>${fmtNum(summary.materialCount)}</strong></div>
-          <div class="stat"><span>投放中</span><strong>${fmtNum(summary.liveCount)}</strong></div>
+          <div class="stat"><span>探索中</span><strong>${fmtNum(summary.exploringCount)}</strong></div>
           <div class="stat"><span>总成本</span><strong>${fmtMoney(summary.cost)}</strong></div>
           <div class="stat"><span>总收入</span><strong>${fmtMoney(summary.revenue)}</strong></div>
           <div class="stat"><span>总 ROI</span><strong>${fmtRoi(summary.roi)}</strong></div>
+          <div class="stat"><span>已探索</span><strong>${fmtNum(summary.exploredCount)}</strong></div>
           <div class="stat"><span>最近上传</span><strong>${summary.latestDate || "—"}</strong></div>
         </div>
         <button class="btn secondary" data-action="detail" data-id="${product.id}">进入详情</button>
@@ -488,7 +505,8 @@
         ${metric("整体 ROI", fmtRoi(summary.roi))}
         ${metric("整体 CPM", fmtMoney(summary.cpm))}
         ${metric("整体 CPC", fmtMoney(summary.cpc))}
-        ${metric("投放中数量", fmtNum(summary.liveCount))}
+        ${metric("探索中数量", fmtNum(summary.exploringCount))}
+        ${metric("已探索数量", fmtNum(summary.exploredCount))}
         ${metric("已排除数量", fmtNum(summary.excludedCount))}
       </div>
       <section class="panel">
@@ -507,13 +525,13 @@
           <table>
             <thead>
               <tr>
-                <th class="sticky-col">作品 ID</th><th>创意素材</th><th>TikTok 账号</th><th>类型</th><th>当前状态</th>
+                <th class="sticky-col">作品 ID</th><th>TikTok 账号</th><th>类型</th><th>当前状态</th>
                 <th>发布时间</th>${sortableTh("cost", "总成本")}${sortableTh("revenue", "总收入")}${sortableTh("orders", "订单")}${sortableTh("impressions", "曝光")}${sortableTh("clicks", "点击")}
                 ${sortableTh("ctr", "点击率")}${sortableTh("conversionRate", "转化率")}${sortableTh("roi", "ROI")}${sortableTh("cpm", "CPM")}${sortableTh("cpc", "CPC")}<th>投放起始</th><th>最新更新</th>${sortableTh("days", "天数")}<th>查看</th>
               </tr>
             </thead>
             <tbody>
-              ${pageRows.map(renderMaterialRow).join("") || `<tr><td colspan="20">没有匹配素材</td></tr>`}
+              ${pageRows.map(renderMaterialRow).join("") || `<tr><td colspan="19">没有匹配素材</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -544,7 +562,6 @@
     return `
       <tr data-work-id="${escapeAttr(m.workId)}">
         <td class="sticky-col"><strong>${escapeHtml(displayWorkId(m.workId))}</strong></td>
-        <td title="${escapeAttr(m.creativeName)}">${escapeHtml(shorten(m.creativeName, 34))}</td>
         <td>${escapeHtml(m.tiktokAccount || "—")}</td>
         <td>${escapeHtml(m.creativeType || "—")}</td>
         <td><span class="badge ${badgeClass(m.currentStatus)}">${escapeHtml(m.currentStatus || "—")}</span></td>
@@ -749,7 +766,9 @@
     return {
       materialCount: materials.length,
       liveCount: materials.filter((m) => m.currentStatus === "投放中").length,
-      excludedCount: materials.filter((m) => m.currentStatus === "已排除").length,
+      exploringCount: materials.filter((m) => statusGroup(m.currentStatus) === "exploring").length,
+      exploredCount: materials.filter((m) => statusGroup(m.currentStatus) === "explored").length,
+      excludedCount: materials.filter((m) => ["excluded", "ineligible", "unavailable"].includes(statusGroup(m.currentStatus))).length,
       cost,
       revenue,
       orders,
