@@ -336,6 +336,10 @@
     return impressions ? (cost / impressions) * 1000 : null;
   }
 
+  function cpc(cost, clicks) {
+    return clicks ? cost / clicks : null;
+  }
+
   function displayWorkId(workId) {
     return workId === "N/A" ? "商品卡片" : workId;
   }
@@ -483,6 +487,7 @@
         ${metric("总订单", fmtNum(summary.orders))}
         ${metric("整体 ROI", fmtRoi(summary.roi))}
         ${metric("整体 CPM", fmtMoney(summary.cpm))}
+        ${metric("整体 CPC", fmtMoney(summary.cpc))}
         ${metric("投放中数量", fmtNum(summary.liveCount))}
         ${metric("已排除数量", fmtNum(summary.excludedCount))}
       </div>
@@ -504,11 +509,11 @@
               <tr>
                 <th class="sticky-col">作品 ID</th><th>创意素材</th><th>TikTok 账号</th><th>类型</th><th>当前状态</th>
                 <th>发布时间</th>${sortableTh("cost", "总成本")}${sortableTh("revenue", "总收入")}${sortableTh("orders", "订单")}${sortableTh("impressions", "曝光")}${sortableTh("clicks", "点击")}
-                ${sortableTh("ctr", "点击率")}${sortableTh("conversionRate", "转化率")}${sortableTh("roi", "ROI")}${sortableTh("cpm", "CPM")}<th>投放起始</th><th>最新更新</th>${sortableTh("days", "天数")}<th>查看</th>
+                ${sortableTh("ctr", "点击率")}${sortableTh("conversionRate", "转化率")}${sortableTh("roi", "ROI")}${sortableTh("cpm", "CPM")}${sortableTh("cpc", "CPC")}<th>投放起始</th><th>最新更新</th>${sortableTh("days", "天数")}<th>查看</th>
               </tr>
             </thead>
             <tbody>
-              ${pageRows.map(renderMaterialRow).join("") || `<tr><td colspan="19">没有匹配素材</td></tr>`}
+              ${pageRows.map(renderMaterialRow).join("") || `<tr><td colspan="20">没有匹配素材</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -553,6 +558,7 @@
         <td>${fmtPct(m.conversionRate)}</td>
         <td>${fmtRoi(m.roi)}</td>
         <td>${fmtMoney(m.cpm)}</td>
+        <td>${fmtMoney(m.cpc)}</td>
         <td>${m.firstDate}</td>
         <td>${m.lastDate}</td>
         <td>${fmtNum(m.days)}</td>
@@ -753,6 +759,7 @@
       ctr: safeRatio(clicks, impressions),
       conversionRate: safeRatio(orders, clicks),
       cpm: cpm(cost, impressions),
+      cpc: cpc(cost, clicks),
       latestDate: uploads.map((u) => u.reportDate).sort().pop() || "",
     };
   }
@@ -798,6 +805,7 @@
         ctr: safeRatio(clicks, impressions),
         conversionRate: safeRatio(orders, clicks),
         cpm: cpm(cost, impressions),
+        cpc: cpc(cost, clicks),
         firstDate,
         lastDate,
         days: naturalDays(firstDate, lastDate),
@@ -1099,6 +1107,7 @@
         ${metric("总订单", fmtNum(material.orders))}
         ${metric("总 ROI", fmtRoi(material.roi))}
         ${metric("总 CPM", fmtMoney(material.cpm))}
+        ${metric("总 CPC", fmtMoney(material.cpc))}
         ${metric("点击率", fmtPct(material.ctr))}
         ${metric("转化率", fmtPct(material.conversionRate))}
       </div>
@@ -1109,13 +1118,13 @@
       <div class="chart-box"><canvas id="materialChart"></canvas></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>日期</th><th>状态</th><th>成本</th><th>总收入</th><th>订单</th><th>ROI</th><th>曝光</th><th>点击</th><th>点击率</th><th>转化率</th><th>CPM</th></tr></thead>
+          <thead><tr><th>日期</th><th>状态</th><th>成本</th><th>总收入</th><th>订单</th><th>ROI</th><th>曝光</th><th>点击</th><th>点击率</th><th>转化率</th><th>CPM</th><th>CPC</th></tr></thead>
           <tbody>
             ${dailyRows.map((r) => `
               <tr>
                 <td>${r.reportDate}</td><td><span class="badge ${badgeClass(r.status)}">${escapeHtml(r.status)}</span></td>
                 <td>${fmtMoney(r.cost)}</td><td>${fmtMoney(r.revenue)}</td><td>${fmtNum(r.skuOrders)}</td><td>${fmtRoi(r.sourceRoi)}</td>
-                <td>${fmtNum(r.impressions)}</td><td>${fmtNum(r.clicks)}</td><td>${fmtPct(safeRatio(r.clicks, r.impressions))}</td><td>${fmtPct(safeRatio(r.skuOrders, r.clicks))}</td><td>${fmtMoney(cpm(r.cost, r.impressions))}</td>
+                <td>${fmtNum(r.impressions)}</td><td>${fmtNum(r.clicks)}</td><td>${fmtPct(safeRatio(r.clicks, r.impressions))}</td><td>${fmtPct(safeRatio(r.skuOrders, r.clicks))}</td><td>${fmtMoney(cpm(r.cost, r.impressions))}</td><td>${fmtMoney(cpc(r.cost, r.clicks))}</td>
               </tr>`).join("")}
           </tbody>
         </table>
@@ -1137,6 +1146,7 @@
           { label: "每日收入", data: rows.map((r) => r.revenue), borderColor: "#c2410c", backgroundColor: "#c2410c", yAxisID: "money", tension: 0.25 },
           { label: "每日 ROI", data: rows.map((r) => r.sourceRoi), borderColor: "#7c3aed", backgroundColor: "#7c3aed", yAxisID: "ratio", tension: 0.25 },
           { label: "每日 CPM", data: rows.map((r) => cpm(r.cost, r.impressions)), borderColor: "#2563eb", backgroundColor: "#2563eb", yAxisID: "money", tension: 0.25 },
+          { label: "每日 CPC", data: rows.map((r) => cpc(r.cost, r.clicks)), borderColor: "#0f9f6e", backgroundColor: "#0f9f6e", yAxisID: "money", tension: 0.25 },
         ],
       },
       options: {
