@@ -60,3 +60,16 @@ window.SUPABASE_CONFIG = {
 
 注意：当前需求是公开访问、无登录，所以 Supabase 策略也按公开读写配置。任何拿到网页地址的人都可以查看、上传、删除和归档数据。
 
+## Vercel 部署说明
+
+Vercel 部署时会优先使用 `/api/state` 代理读写 Supabase，避免访问者浏览器直接连接 `supabase.co` 时遇到 DNS 或网络拦截。
+
+可选：在 Vercel 项目 Settings > Environment Variables 中配置：
+
+```text
+SUPABASE_URL=https://你的项目.supabase.co
+SUPABASE_ANON_KEY=你的 publishable key
+```
+
+如果没有配置环境变量，`api/state.js` 会使用当前项目里写好的默认 Supabase 地址和 publishable key。
+
