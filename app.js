@@ -64,6 +64,7 @@
   const cloud = {
     enabled: false,
     client: null,
+    mode: "",
     syncTimer: null,
     lastError: "",
   };
@@ -171,6 +172,9 @@
   }
 
   async function initCloud() {
+    const apiOk = await initCloudViaApi();
+    if (apiOk) return;
+
     const config = window.SUPABASE_CONFIG || {};
     const url = (config.url || "").trim();
     const anonKey = (config.anonKey || "").trim();
@@ -183,6 +187,7 @@
       const { data, error } = await cloud.client.from("app_state").select("state").eq("id", "main").maybeSingle();
       if (error) throw error;
       cloud.enabled = true;
+      cloud.mode = "supabase";
       if (data?.state) {
         replaceState(data.state);
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -194,6 +199,28 @@
       cloud.enabled = false;
       cloud.lastError = error.message || "Supabase 连接失败";
       setStorageMode("本地 MVP", `云端连接失败：${cloud.lastError}`);
+    }
+  }
+
+  async function initCloudViaApi() {
+    try {
+      const response = await fetch("./api/state", {
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) return false;
+      const data = await response.json();
+      cloud.enabled = true;
+      cloud.mode = "api";
+      if (data?.state) {
+        replaceState(data.state);
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      } else {
+        await saveCloudState();
+      }
+      setStorageMode("云端共享", "已通过 Vercel 连接 Supabase，所有访问者共享同一份数据。");
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -223,7 +250,7 @@
   }
 
   async function saveCloudState() {
-    if (!cloud.enabled || !cloud.client) return;
+    if (!cloud.enabled) return;
     const payload = {
       id: "main",
       state: {
@@ -234,6 +261,20 @@
       },
       updated_at: new Date().toISOString(),
     };
+    if (cloud.mode === "api") {
+      const response = await fetch("./api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: payload.state }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "云端保存失败");
+      }
+      setStorageMode("云端共享", "已通过 Vercel 连接 Supabase，所有访问者共享同一份数据。");
+      return;
+    }
+    if (!cloud.client) return;
     const { error } = await cloud.client.from("app_state").upsert(payload, { onConflict: "id" });
     if (error) throw error;
     setStorageMode("云端共享", "已连接 Supabase，所有访问者共享同一份数据。");
