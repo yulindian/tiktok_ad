@@ -6,29 +6,29 @@
   const PAGE_SIZE = 20;
 
   const fieldAliases = {
-    workId: ["作品 ID"],
-    creativeName: ["创意素材"],
-    tiktokAccount: ["TikTok 账号"],
-    creativeType: ["创意作品类型"],
-    videoSource: ["视频来源"],
-    status: ["状态"],
-    publishTime: ["发布时间"],
-    cost: ["成本"],
-    skuOrders: ["SKU 订单数"],
-    avgOrderCost: ["平均下单成本"],
-    revenue: ["总收入"],
+    workId: ["作品 ID", "Post ID"],
+    creativeName: ["创意素材", "Creative"],
+    tiktokAccount: ["TikTok 账号", "TikTok account"],
+    creativeType: ["创意作品类型", "Creative type"],
+    videoSource: ["视频来源", "Video source"],
+    status: ["状态", "Status"],
+    publishTime: ["发布时间", "Time posted"],
+    cost: ["成本", "Cost"],
+    skuOrders: ["SKU 订单数", "SKU orders"],
+    avgOrderCost: ["平均下单成本", "Cost per order"],
+    revenue: ["总收入", "Gross revenue"],
     sourceRoi: ["ROI"],
-    impressions: ["商品广告曝光数"],
-    clicks: ["商品广告点击数"],
-    sourceCtr: ["商品广告点击率"],
-    sourceConversionRate: ["广告转化率"],
-    playRate2s: ["2秒播放率", "广告视频播放达 2 秒播放率"],
-    playRate6s: ["6秒播放率", "广告视频播放达 6 秒播放率"],
-    playRate25: ["25%播放率", "广告视频播放达 25% 播放率"],
-    playRate50: ["50%播放率", "广告视频播放达 50% 播放率"],
-    playRate75: ["75%播放率", "广告视频播放达 75% 播放率"],
-    completionRate: ["完播率", "广告视频完播率"],
-    currency: ["货币"],
+    impressions: ["商品广告曝光数", "Product ad impressions"],
+    clicks: ["商品广告点击数", "Product ad clicks"],
+    sourceCtr: ["商品广告点击率", "Product ad click rate"],
+    sourceConversionRate: ["广告转化率", "Ad conversion rate"],
+    playRate2s: ["2秒播放率", "广告视频播放达 2 秒播放率", "2-second ad video view rate"],
+    playRate6s: ["6秒播放率", "广告视频播放达 6 秒播放率", "6-second ad video view rate"],
+    playRate25: ["25%播放率", "广告视频播放达 25% 播放率", "25% ad video view rate"],
+    playRate50: ["50%播放率", "广告视频播放达 50% 播放率", "50% ad video view rate"],
+    playRate75: ["75%播放率", "广告视频播放达 75% 播放率", "75% ad video view rate"],
+    completionRate: ["完播率", "广告视频完播率", "100% ad video view rate"],
+    currency: ["货币", "Currency"],
   };
 
   const numericFields = [
@@ -979,15 +979,16 @@
 
   function parseWorkbook(workbook, ext) {
     let selected = null;
+    const workIdHeaders = fieldAliases.workId.map(normalizeLoose);
     for (const name of workbook.SheetNames) {
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, raw: false, defval: "" });
-      const headerIndex = rows.findIndex((row) => row.some((cell) => normalizeLoose(cell) === normalizeLoose("作品 ID")));
+      const headerIndex = rows.findIndex((row) => row.some((cell) => workIdHeaders.includes(normalizeLoose(cell))));
       if (headerIndex >= 0) {
         selected = { name, rows, headerIndex };
         break;
       }
     }
-    if (!selected) throw new Error(ext === "csv" ? "缺少字段：作品 ID" : "未找到包含“作品 ID”的工作表");
+    if (!selected) throw new Error(ext === "csv" ? "缺少字段：作品 ID / Post ID" : "未找到包含“作品 ID / Post ID”的工作表");
     const header = selected.rows[selected.headerIndex].map(normalizeHeader);
     const headerLoose = header.map(normalizeLoose);
     const mapping = {};
